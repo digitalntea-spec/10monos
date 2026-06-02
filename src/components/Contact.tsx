@@ -184,8 +184,8 @@ export default function Contact() {
           >
             {/* Contact cards */}
             {[
-              { icon: Mail, label: "Email", value: "hola@10monos.com.ar", href: "mailto:hola@10monos.com.ar" },
-              { icon: Phone, label: "WhatsApp", value: "+54 9 11 1234-5678", href: "https://wa.me/5491112345678" },
+              { icon: Mail, label: "Email", value: "digital.ntea@gmail.com", href: "mailto:digital.ntea@gmail.com" },
+              { icon: Phone, label: "WhatsApp", value: "+54 11 4078-4646", href: "https://wa.me/5491140784646" },
               { icon: MapPin, label: "Ubicación", value: "Buenos Aires, Argentina", href: null },
             ].map((c) => (
               <div

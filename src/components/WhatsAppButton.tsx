@@ -51,7 +51,7 @@ export default function WhatsAppButton() {
             <div className="absolute inset-0 rounded-full bg-[#25D366] opacity-10 animate-[pulseRing_2s_ease-out_0.5s_infinite]" />
 
             <a
-              href="https://wa.me/5491112345678?text=Hola%2C%20quiero%20una%20consulta%20gratuita%20con%2010%20Monos"
+              href="https://wa.me/5491140784646?text=Hola%2C%20quiero%20una%20consulta%20gratuita%20con%2010%20Monos"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setTooltipOpen(false)}

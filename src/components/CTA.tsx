@@ -52,7 +52,7 @@ export default function CTA() {
                 Agendar Reunión
               </button>
               <a
-                href="https://wa.me/5491112345678?text=Hola%2C%20quiero%20saber%20más%20sobre%2010%20Monos"
+                href="https://wa.me/5491140784646?text=Hola%2C%20quiero%20saber%20más%20sobre%2010%20Monos"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-[#9CA3AF] hover:text-white font-semibold text-base px-6 py-4 rounded-full border border-[#2a2a2a] hover:border-[#FF5A1F]/40 transition-all duration-200"
