@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { emailTemplate } from "@/lib/email-template";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // Inicialización dentro de la función para evitar ejecución en build time
+  const apiKey = (process.env.RESEND_API_KEY ?? "").replace(/^﻿/, "");
+  const resend = new Resend(apiKey);
   try {
     const body = await request.json();
     const { nombre, empresa, telefono, email, mensaje } = body;
