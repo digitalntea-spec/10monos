@@ -20,32 +20,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email inválido." }, { status: 400 });
     }
 
-    // Limpiar API key: eliminar BOM (U+FEFF) y espacios que Windows puede agregar
-    const rawKey = process.env.RESEND_API_KEY ?? "";
-    const apiKey = rawKey.replace(/[﻿​\s]/g, "");
+    // Limpiar BOM (U+FEFF) que Windows agrega al pasar variables por CLI
+    const apiKey = (process.env.RESEND_API_KEY ?? "").replace(/^﻿/, "").trim();
+    const resend = new Resend(apiKey);
 
     // 1. Enviar email via Resend
-    let emailOk = false;
-    try {
-      const resend = new Resend(apiKey);
-      const { error: resendError } = await resend.emails.send({
-        from: "10 Monos <onboarding@resend.dev>",
-        to: ["digital.ntea@gmail.com"],
-        replyTo: email,
-        subject: `Nuevo contacto: ${nombre}${empresa ? ` · ${empresa}` : ""}`,
-        html: emailTemplate({ nombre, empresa, telefono, email, mensaje }),
-      });
-      if (resendError) {
-        console.error("Resend API error:", JSON.stringify(resendError));
-      } else {
-        emailOk = true;
-      }
-    } catch (emailError) {
-      console.error("Resend exception:", emailError);
+    const { error: resendError } = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "digital.ntea@gmail.com",
+      subject: `Nuevo contacto: ${nombre}${empresa ? ` · ${empresa}` : ""}`,
+      html: emailTemplate({ nombre, empresa, telefono, email, mensaje }),
+    });
+
+    if (resendError) {
+      console.error("Resend error:", JSON.stringify(resendError));
+      return NextResponse.json(
+        { error: "No se pudo enviar el email. Intentá de nuevo." },
+        { status: 500 }
+      );
     }
 
     // 2. Guardar en Google Sheets
-    const webhookUrl = (process.env.SHEETS_WEBHOOK_URL ?? "").replace(/[﻿​\s]/g, "");
+    const webhookUrl = (process.env.SHEETS_WEBHOOK_URL ?? "").replace(/^﻿/, "").trim();
     if (webhookUrl) {
       try {
         await fetch(webhookUrl, {
@@ -65,13 +61,6 @@ export async function POST(request: Request) {
       } catch (sheetsError) {
         console.error("Sheets error:", sheetsError);
       }
-    }
-
-    if (!emailOk) {
-      return NextResponse.json(
-        { error: "No se pudo enviar el mensaje. Intentá de nuevo." },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({ ok: true });
