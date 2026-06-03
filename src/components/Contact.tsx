@@ -41,8 +41,9 @@ export default function Contact() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error desconocido");
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) throw new Error(data.error || "Error al enviar. Intentá de nuevo.");
       setSent(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al enviar. Intentá de nuevo.");

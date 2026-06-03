@@ -5,9 +5,6 @@ import { emailTemplate } from "@/lib/email-template";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  // Inicialización dentro de la función para evitar ejecución en build time
-  const apiKey = (process.env.RESEND_API_KEY ?? "").replace(/^﻿/, "");
-  const resend = new Resend(apiKey);
   try {
     const body = await request.json();
     const { nombre, empresa, telefono, email, mensaje } = body;
@@ -19,32 +16,36 @@ export async function POST(request: Request) {
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Email inválido." },
-        { status: 400 }
-      );
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Email inválido." }, { status: 400 });
     }
 
-    const errors: string[] = [];
+    // Limpiar API key: eliminar BOM (U+FEFF) y espacios que Windows puede agregar
+    const rawKey = process.env.RESEND_API_KEY ?? "";
+    const apiKey = rawKey.replace(/[﻿​\s]/g, "");
 
     // 1. Enviar email via Resend
+    let emailOk = false;
     try {
-      await resend.emails.send({
+      const resend = new Resend(apiKey);
+      const { error: resendError } = await resend.emails.send({
         from: "10 Monos <onboarding@resend.dev>",
         to: ["digital.ntea@gmail.com"],
         replyTo: email,
         subject: `Nuevo contacto: ${nombre}${empresa ? ` · ${empresa}` : ""}`,
         html: emailTemplate({ nombre, empresa, telefono, email, mensaje }),
       });
+      if (resendError) {
+        console.error("Resend API error:", JSON.stringify(resendError));
+      } else {
+        emailOk = true;
+      }
     } catch (emailError) {
-      console.error("Error Resend:", emailError);
-      errors.push("email");
+      console.error("Resend exception:", emailError);
     }
 
-    // 2. Guardar en Google Sheets via Apps Script webhook
-    const webhookUrl = process.env.SHEETS_WEBHOOK_URL;
+    // 2. Guardar en Google Sheets
+    const webhookUrl = (process.env.SHEETS_WEBHOOK_URL ?? "").replace(/[﻿​\s]/g, "");
     if (webhookUrl) {
       try {
         await fetch(webhookUrl, {
@@ -62,13 +63,11 @@ export async function POST(request: Request) {
           }),
         });
       } catch (sheetsError) {
-        console.error("Error Sheets:", sheetsError);
-        errors.push("sheets");
+        console.error("Sheets error:", sheetsError);
       }
     }
 
-    // Si el email falló, retornar error
-    if (errors.includes("email")) {
+    if (!emailOk) {
       return NextResponse.json(
         { error: "No se pudo enviar el mensaje. Intentá de nuevo." },
         { status: 500 }
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("Error API contact:", err);
+    console.error("Contact API error:", err);
     return NextResponse.json(
       { error: "Error inesperado. Intentá de nuevo." },
       { status: 500 }
